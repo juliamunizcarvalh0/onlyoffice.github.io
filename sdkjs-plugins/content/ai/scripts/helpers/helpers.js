@@ -3643,6 +3643,19 @@ HELPERS.slide.push((function(){
 	const MAX_WORDS = 50;
 	const COMMENT_PREFIX = "[Accessibility] ";
 
+	// Alt text that is only a file name ("grafico.png") or a default shape name
+	// ("Picture 2", "Imagem 1") does not describe the image for screen reader users.
+	function isMeaningfulAltText(alt) {
+		let t = (alt || "").trim();
+		if (!t)
+			return false;
+		if (/^[^\s\/\\]+\.(png|jpe?g|gif|bmp|svg|webp|tiff?|emf|wmf)$/i.test(t))
+			return false;
+		if (/^(picture|image|imagem|figura|figure|graphic|gráfico|grafico|chart|foto|photo)\s*\d*$/i.test(t))
+			return false;
+		return true;
+	}
+
 	function normalizeTitle(str) {
 		return (str || "").replace(/\s+/g, " ").trim().toLowerCase();
 	}
@@ -3665,8 +3678,10 @@ HELPERS.slide.push((function(){
 				issues.push({ kind: "duplicateTitle", detail: "The title \"" + s.title.trim() + "\" is used on more than one slide. Each slide should have a unique title." });
 
 			for (let img of s.images) {
-				if (!img.hasAlt)
-					issues.push({ kind: "missingAlt", image: img.drawing, detail: "The " + img.kind + " \"" + (img.name || "unnamed") + "\" has no alternative text." });
+				if (!isMeaningfulAltText(img.alt)) {
+					let current = (img.alt || "").trim();
+					issues.push({ kind: "missingAlt", image: img.drawing, detail: "The " + img.kind + " \"" + (img.name || "unnamed") + "\" " + (current ? "has the alternative text \"" + current + "\", which does not describe the image." : "has no alternative text.") });
+				}
 			}
 
 			if (s.minFont !== null && s.minFont < MIN_FONT_PT)
@@ -3791,7 +3806,7 @@ HELPERS.slide.push((function(){
 							drawing: i,
 							kind: type === "oleObject" ? "object" : type,
 							name: drawing.GetName ? drawing.GetName() : "",
-							hasAlt: alt.trim().length > 0
+							alt: alt
 						});
 					}
 				}
