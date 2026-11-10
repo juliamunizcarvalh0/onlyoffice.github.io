@@ -83,6 +83,7 @@
 	const MIN_FONT_PT = 18;
 	const MAX_PARAGRAPHS = 6;
 	const MAX_WORDS = 50;
+	const MAX_ALT_TEXT_LENGTH = 125; // same limit in the prompt and in the code
 	const COMMENT_PREFIX = "[Accessibility] ";
 
 	// Alt text that is only a file name ("grafico.png") or a default shape name
@@ -165,7 +166,7 @@
 		}).join("\n\n");
 
 		return "You are an accessibility reviewer for presentations, following WCAG guidelines. An automatic check found the problems listed for each slide below. " +
-			"For each slide: 1) for every image id listed, write a short alternative text (at most 125 characters) describing the role of the image in the slide, based on the slide title and text; " +
+			"For each slide: 1) for every image id listed, write a short alternative text (at most " + MAX_ALT_TEXT_LENGTH + " characters) describing the role of the image in the slide, based on the slide title and text; " +
 			"2) if the problems include noTitle or duplicateTitle, suggest a short unique title; " +
 			"3) if the problems include tooMuchText or smallFont, give one concrete piece of advice (at most 40 words) to fix it. " +
 			"Write in the same language as the slide text. " +
@@ -311,7 +312,7 @@
 			if (Array.isArray(sug.altTexts)) {
 				for (let a of sug.altTexts) {
 					if (a && typeof a.altText === "string" && a.altText.trim())
-						altById[a.image] = a.altText.trim().substring(0, 250);
+						altById[a.image] = a.altText.trim().substring(0, MAX_ALT_TEXT_LENGTH);
 				}
 			}
 
