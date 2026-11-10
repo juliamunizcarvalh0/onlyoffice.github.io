@@ -183,18 +183,26 @@ HELPERS.word.push((function(){
 		for (let c of citations) {
 			let surname = normalize(c.surnames[0]);
 			let year = c.year.substring(0, 4);
+			let fullYear = normalize(c.year); // keeps the letter: "2020a"
 			let exact = -1;
+			let sameYear = -1;
 			let sameAuthor = -1;
 			for (let i = 0; i < normRefs.length; i++) {
 				if (normRefs[i].indexOf(surname) === -1)
 					continue;
-				if (normRefs[i].indexOf(year) !== -1) {
+				// Same author with works in the same year ("2020a", "2020b"):
+				// the reference with the same letter is the exact match
+				if (fullYear !== year && normRefs[i].indexOf(fullYear) !== -1) {
 					exact = i;
 					break;
 				}
+				if (sameYear === -1 && normRefs[i].indexOf(year) !== -1)
+					sameYear = i;
 				if (sameAuthor === -1)
 					sameAuthor = i;
 			}
+			if (exact === -1)
+				exact = sameYear;
 
 			if (exact !== -1) {
 				cited[exact] = true;
@@ -3641,6 +3649,7 @@ HELPERS.slide.push((function(){
 	const MIN_FONT_PT = 18;
 	const MAX_PARAGRAPHS = 6;
 	const MAX_WORDS = 50;
+	const MAX_ALT_TEXT_LENGTH = 125; // same limit in the prompt and in the code
 	const COMMENT_PREFIX = "[Accessibility] ";
 
 	// Alt text that is only a file name ("grafico.png") or a default shape name
@@ -3723,7 +3732,7 @@ HELPERS.slide.push((function(){
 		}).join("\n\n");
 
 		return "You are an accessibility reviewer for presentations, following WCAG guidelines. An automatic check found the problems listed for each slide below. " +
-			"For each slide: 1) for every image id listed, write a short alternative text (at most 125 characters) describing the role of the image in the slide, based on the slide title and text; " +
+			"For each slide: 1) for every image id listed, write a short alternative text (at most " + MAX_ALT_TEXT_LENGTH + " characters) describing the role of the image in the slide, based on the slide title and text; " +
 			"2) if the problems include noTitle or duplicateTitle, suggest a short unique title; " +
 			"3) if the problems include tooMuchText or smallFont, give one concrete piece of advice (at most 40 words) to fix it. " +
 			"Write in the same language as the slide text. " +
@@ -3869,7 +3878,7 @@ HELPERS.slide.push((function(){
 			if (Array.isArray(sug.altTexts)) {
 				for (let a of sug.altTexts) {
 					if (a && typeof a.altText === "string" && a.altText.trim())
-						altById[a.image] = a.altText.trim().substring(0, 250);
+						altById[a.image] = a.altText.trim().substring(0, MAX_ALT_TEXT_LENGTH);
 				}
 			}
 
