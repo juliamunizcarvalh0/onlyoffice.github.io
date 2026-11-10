@@ -181,18 +181,26 @@
 		for (let c of citations) {
 			let surname = normalize(c.surnames[0]);
 			let year = c.year.substring(0, 4);
+			let fullYear = normalize(c.year); // keeps the letter: "2020a"
 			let exact = -1;
+			let sameYear = -1;
 			let sameAuthor = -1;
 			for (let i = 0; i < normRefs.length; i++) {
 				if (normRefs[i].indexOf(surname) === -1)
 					continue;
-				if (normRefs[i].indexOf(year) !== -1) {
+				// Same author with works in the same year ("2020a", "2020b"):
+				// the reference with the same letter is the exact match
+				if (fullYear !== year && normRefs[i].indexOf(fullYear) !== -1) {
 					exact = i;
 					break;
 				}
+				if (sameYear === -1 && normRefs[i].indexOf(year) !== -1)
+					sameYear = i;
 				if (sameAuthor === -1)
 					sameAuthor = i;
 			}
+			if (exact === -1)
+				exact = sameYear;
 
 			if (exact !== -1) {
 				cited[exact] = true;
